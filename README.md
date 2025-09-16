@@ -6,7 +6,7 @@
 
 This project is an **Escrow Service Web Application** that facilitates secure transactions between buyers and sellers. Payments are managed via **PayFast**, and funds are released only when both parties agree that the terms of the transaction have been met.
 
-This is a **template** to guide our teams. The structure, pages, and modules defined here are starting points and **can be modified or expanded** as development progresses.
+This is a **template** guide. The structure, pages, and modules defined here are starting points and **can be modified or expanded** as development progresses.
 
 ---
 
