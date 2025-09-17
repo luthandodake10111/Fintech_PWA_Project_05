@@ -1,0 +1,174 @@
+# API Contracts Documentation
+
+## Overview
+This folder contains all API documentation for the Escrow Service backend.
+
+## Files
+- `escrow-api.yaml` - Main OpenAPI 3.0 specification
+- `README.md` - This documentation guide
+- `postman/` - Postman collections for testing (coming in Sprint 1)
+
+## Viewing the Documentation
+
+### Online Swagger Editor
+1. Go to [editor.swagger.io](https://editor.swagger.io)
+2. Copy the contents of `escrow-api.yaml`
+3. Paste into the editor to view formatted documentation
+
+### Local Development
+1. Install swagger-ui-express in your backend:
+   ```bash
+   npm install swagger-ui-express yamljs
+   ```
+2. Add to your Express app (we'll do this in Sprint 1)
+
+## API Base URLs
+- **Development**: `http://localhost:3001/api/v1`
+- **Staging**: `https://staging-api.escrowservice.com/api/v1` (TBD)
+- **Production**: `https://api.escrowservice.com/api/v1` (TBD)
+
+## Authentication
+All endpoints (except auth and webhooks) require JWT Bearer token:
+```
+Authorization: Bearer <your-jwt-token>
+```
+
+## Sprint 1 Priority Endpoints
+1. **Authentication**: `/auth/register`, `/auth/login`
+2. **User Profile**: `/users/profile` (GET, PUT)
+3. **Transaction Basics**: `/transactions` (GET, POST)
+4. **Transaction Details**: `/transactions/{id}` (GET)
+
+## Sprint 2 Endpoints
+1. **Payment Integration**: `/payments/initiate`, `/payments/webhook/payfast`
+2. **Transaction Updates**: `/transactions/{id}` (PUT)
+
+## Sprint 3 Endpoints
+1. **Dispute System**: `/disputes` (GET, POST)
+2. **Dispute Management**: `/disputes/{id}` (GET)
+
+## Frontend Team Integration
+This API specification serves as the contract between backend and frontend teams. All endpoints defined here will be implemented and ready for frontend consumption.
+
+## Testing
+- Use the Postman collection (coming soon)
+- Test authentication flow first
+- Verify all required fields and validation rules
+- Check error response formats
+
+## Data Models
+
+### User Model
+```json
+{
+  "id": "uuid",
+  "email": "string",
+  "firstName": "string", 
+  "lastName": "string",
+  "role": "buyer|seller|admin",
+  "isVerified": "boolean",
+  "createdAt": "datetime",
+  "updatedAt": "datetime"
+}
+```
+
+### Transaction Model
+```json
+{
+  "id": "uuid",
+  "buyerId": "uuid",
+  "sellerId": "uuid", 
+  "title": "string",
+  "description": "string",
+  "amount": "decimal",
+  "currency": "ZAR|USD",
+  "status": "created|funded|in_progress|completed|disputed|cancelled",
+  "paymentStatus": "pending|paid|failed|refunded",
+  "createdAt": "datetime",
+  "updatedAt": "datetime",
+  "completedAt": "datetime|null"
+}
+```
+
+### Dispute Model
+```json
+{
+  "id": "uuid",
+  "transactionId": "uuid",
+  "raisedById": "uuid",
+  "reason": "string",
+  "status": "open|in_review|resolved|closed",
+  "resolution": "string|null",
+  "createdAt": "datetime"
+}
+```
+
+## Error Response Format
+All API errors follow this consistent format:
+```json
+{
+  "error": "Error category",
+  "message": "Detailed error message",
+  "code": "ERROR_CODE",
+  "timestamp": "2024-01-15T10:30:00Z"
+}
+```
+
+## Authentication Flow
+1. **Register**: `POST /auth/register`
+2. **Login**: `POST /auth/login` → Returns JWT token
+3. **Use Token**: Include in `Authorization: Bearer <token>` header
+4. **Refresh**: `POST /auth/refresh` when token expires
+
+## Payment Flow
+1. **Create Transaction**: `POST /transactions`
+2. **Initiate Payment**: `POST /payments/initiate`
+3. **User Redirected**: To PayFast payment page
+4. **Webhook Notification**: PayFast calls `/payments/webhook/payfast`
+5. **Transaction Updated**: Status changes to 'funded'
+
+## Status Codes
+- `200` - Success
+- `201` - Created successfully
+- `400` - Bad request (validation errors)
+- `401` - Unauthorized (invalid/missing token)
+- `403` - Forbidden (insufficient permissions)
+- `404` - Not found
+- `500` - Internal server error
+
+## Implementation Notes
+
+### For Backend Team
+- Implement endpoints in order of Sprint priority
+- Follow the exact response formats defined
+- Use conventional HTTP status codes
+- Implement proper JWT validation middleware
+- Add input validation matching the schema requirements
+
+### For Frontend Team
+- All API responses match the schemas defined
+- Handle loading states for async operations
+- Implement proper error handling for each status code
+- Store JWT tokens securely (httpOnly cookies recommended)
+- Implement token refresh logic
+
+### For QA Team
+- Test all authentication flows thoroughly
+- Verify input validation on all endpoints
+- Test error scenarios and edge cases
+- Confirm PayFast webhook integration
+- Validate transaction state management
+
+## Security Considerations
+- JWT tokens expire after 24 hours (configurable)
+- Refresh tokens expire after 7 days (configurable)
+- All sensitive endpoints require authentication
+- PayFast webhooks include signature verification
+- Input validation on all endpoints
+- Rate limiting on authentication endpoints
+
+## Development Workflow
+1. **Backend**: Implement endpoints matching this specification
+2. **Frontend**: Build UI components consuming these APIs
+3. **Testing**: Use specification for API testing and validation
+4. **Updates**: Keep this documentation updated with any changes
