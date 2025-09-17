@@ -1,0 +1,606 @@
+openapi: 3.0.3
+info:
+  title: Escrow Service API
+  description: |
+    Secure escrow service API for managing transactions between buyers and sellers.
+    Payments are processed through PayFast integration.
+  version: 1.0.0
+  contact:
+    name: Backend Team
+    email: backend@escrowservice.com
+
+servers:
+  - url: http://localhost:3001/api/v1
+    description: Development server
+  - url: https://staging-api.escrowservice.com/api/v1
+    description: Staging server
+  - url: https://api.escrowservice.com/api/v1
+    description: Production server
+
+# Security schemes
+security:
+  - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        firstName:
+          type: string
+          example: "John"
+        lastName:
+          type: string
+          example: "Doe"
+        role:
+          type: string
+          enum: [buyer, seller, admin]
+          example: "buyer"
+        isVerified:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        buyerId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        sellerId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        title:
+          type: string
+          example: "Website Development Project"
+        description:
+          type: string
+          example: "Build a responsive e-commerce website"
+        amount:
+          type: number
+          format: decimal
+          example: 1500.00
+        currency:
+          type: string
+          enum: [ZAR, USD]
+          example: "ZAR"
+        status:
+          type: string
+          enum: [created, funded, in_progress, completed, disputed, cancelled]
+          example: "created"
+        paymentStatus:
+          type: string
+          enum: [pending, paid, failed, refunded]
+          example: "pending"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    Dispute:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        transactionId:
+          type: string
+          format: uuid
+        raisedById:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          example: "Service not delivered as agreed"
+        status:
+          type: string
+          enum: [open, in_review, resolved, closed]
+        resolution:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    AuthRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        password:
+          type: string
+          minLength: 8
+          example: "SecurePass123!"
+
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        refreshToken:
+          type: string
+          example: "dGhpcyBpcyBhIHJlZnJlc2ggdG9rZW4..."
+
+    CreateTransactionRequest:
+      type: object
+      required:
+        - sellerId
+        - title
+        - amount
+      properties:
+        sellerId:
+          type: string
+          format: uuid
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 1000
+        amount:
+          type: number
+          format: decimal
+          minimum: 1
+        currency:
+          type: string
+          enum: [ZAR, USD]
+          default: "ZAR"
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Invalid request"
+        message:
+          type: string
+          example: "The provided email address is not valid"
+        code:
+          type: string
+          example: "VALIDATION_ERROR"
+        timestamp:
+          type: string
+          format: date-time
+
+# API Paths
+paths:
+  # Authentication Endpoints
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register new user
+      description: Create a new user account
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/AuthRequest'
+                - type: object
+                  required:
+                    - firstName
+                    - lastName
+                    - role
+                  properties:
+                    firstName:
+                      type: string
+                      example: "John"
+                    lastName:
+                      type: string
+                      example: "Doe"
+                    role:
+                      type: string
+                      enum: [buyer, seller]
+                      example: "buyer"
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Authenticate user and return JWT token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh JWT token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  refreshToken:
+                    type: string
+
+  # User Endpoints
+  /users/profile:
+    get:
+      tags:
+        - Users
+      summary: Get current user profile
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Users
+      summary: Update user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+      responses:
+        '200':
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  # Transaction Endpoints
+  /transactions:
+    get:
+      tags:
+        - Transactions
+      summary: Get user's transactions
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [created, funded, in_progress, completed, disputed, cancelled]
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [buyer, seller]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: List of transactions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transactions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Transaction'
+                  pagination:
+                    type: object
+                    properties:
+                      currentPage:
+                        type: integer
+                      totalPages:
+                        type: integer
+                      totalItems:
+                        type: integer
+
+    post:
+      tags:
+        - Transactions
+      summary: Create new transaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTransactionRequest'
+      responses:
+        '201':
+          description: Transaction created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+
+  /transactions/{transactionId}:
+    get:
+      tags:
+        - Transactions
+      summary: Get transaction details
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Transaction details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '404':
+          description: Transaction not found
+
+    put:
+      tags:
+        - Transactions
+      summary: Update transaction status
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                  enum: [complete, cancel]
+      responses:
+        '200':
+          description: Transaction updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+
+  # Payment Endpoints
+  /payments/initiate:
+    post:
+      tags:
+        - Payments
+      summary: Initiate PayFast payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - transactionId
+              properties:
+                transactionId:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Payment initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  paymentUrl:
+                    type: string
+                    example: "https://sandbox.payfast.co.za/eng/process"
+                  paymentId:
+                    type: string
+
+  /payments/webhook/payfast:
+    post:
+      tags:
+        - Payments
+      summary: PayFast webhook endpoint
+      description: Handles payment notifications from PayFast
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                payment_status:
+                  type: string
+                pf_payment_id:
+                  type: string
+                custom_str1:
+                  type: string
+                  description: "Transaction ID"
+      responses:
+        '200':
+          description: Webhook processed
+        '400':
+          description: Invalid webhook data
+
+  # Dispute Endpoints
+  /disputes:
+    get:
+      tags:
+        - Disputes
+      summary: Get user's disputes
+      responses:
+        '200':
+          description: List of disputes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Dispute'
+
+    post:
+      tags:
+        - Disputes
+      summary: Create dispute
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - transactionId
+                - reason
+              properties:
+                transactionId:
+                  type: string
+                  format: uuid
+                reason:
+                  type: string
+      responses:
+        '201':
+          description: Dispute created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dispute'
+
+  /disputes/{disputeId}:
+    get:
+      tags:
+        - Disputes
+      summary: Get dispute details
+      parameters:
+        - name: disputeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Dispute details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dispute'
+
+# Tags for grouping endpoints
+tags:
+  - name: Authentication
+    description: User authentication and authorization
+  - name: Users
+    description: User profile management
+  - name: Transactions
+    description: Escrow transaction management
+  - name: Payments
+    description: Payment processing with PayFast
+  - name: Disputes
+    description: Dispute resolution system
