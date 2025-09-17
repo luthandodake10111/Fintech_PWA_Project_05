@@ -22,37 +22,36 @@ The system follows a **Client–Server (3-Tier) Architecture**, with clear separ
 
 ## 3. System Diagram
 
-![System Architecture](Fintech_PWA_Project_05/docs/system-architecture.png)
-
-> system-architecture.png
+![System Architecture Diagram](./docs/system-architecture.png)
 
 ---
 
 ## 4. Key Benefits of React + Vite
 
-* **Faster Development:** Vite offers instant server start and Hot Module Replacement (HMR), so code changes are reflected instantly.
-* **Modern Tooling:** Uses native ES modules and esbuild (Go-based), outperforming older bundlers like Webpack.
-* **Optimised Builds:** Extremely fast production builds with efficient dependency pre-bundling.
-* **PWA Ready:** Easy integration with plugins like `vite-plugin-pwa` for offline support, caching, and installability.
-* **Clear Structure:** Feature-based folder organisation (`/src/features/auth/`, `/src/features/transactions/`), keeping code modular and maintainable.
+*   **Faster Development:** Vite offers instant server start and Hot Module Replacement (HMR), so code changes are reflected instantly.
+*   **Modern Tooling:** Uses native ES modules and esbuild (Go-based), outperforming older bundlers like Webpack.
+*   **Optimised Builds:** Extremely fast production builds with efficient dependency pre-bundling.
+*   **PWA Ready:** Easy integration with plugins like `vite-plugin-pwa` for offline support, caching, and installability.
+*   **Clear Structure:** Feature-based folder organisation (`/src/features/auth/`, `/src/features/transactions/`), keeping code modular and maintainable.
 
 ---
 
 ## 5. Development Workflow
 
-* During **development**, the **Vite Dev Server** runs locally, serving React assets and proxying API requests to the backend (avoiding CORS).
-* In **production**, the React app is built into static assets and deployed on **Vercel**.
-* The **backend API** (Node.js/Express) is deployed separately on **Railway**. The frontend communicates with it via HTTPS requests to exposed endpoints.
-* Database operations are managed by **Prisma**, interfacing with PostgreSQL on Railway.
+*   During **development**, the **Vite Dev Server** runs locally, serving React assets and proxying API requests to the backend (avoiding CORS).
+*   In **production**, the React app is built into static assets and deployed on **Vercel**.
+*   The **backend API** (Node.js/Express) is deployed separately on **Railway**. The frontend communicates with it via HTTPS requests to exposed endpoints.
+*   Database operations are managed by **Prisma**, interfacing with PostgreSQL on Railway.
 
 ---
 
-## 6. Folder Structure (Planned)
+## 6. Folder Structure
 
 ```
-/frontend         # React + Vite PWA
-/backend          # Node.js/Express API
-/docs             # Architecture diagrams, documentation
+/fintech-escrow-app
+├── frontend/          # React + Vite PWA
+├── backend/           # Node.js/Express + Prisma API
+└── docs/              # Architecture diagrams, API contracts, DB schema
 ```
 
 ---
@@ -61,10 +60,8 @@ The system follows a **Client–Server (3-Tier) Architecture**, with clear separ
 
 This combination of **React + Vite + Node.js + PostgreSQL** provides:
 
-* A modern developer experience (fast iteration, clean tooling)
-* A scalable, modular, and maintainable codebase
-* A reliable deployment pipeline across Vercel (frontend) and Railway (backend + DB)
-* Strong integration with PayFast for secure fintech transactions
-
-
+*   A modern developer experience (fast iteration, clean tooling)
+*   A scalable, modular, and maintainable codebase
+*   A reliable deployment pipeline across Vercel (frontend) and Railway (backend + DB)
+*   Strong integration with PayFast for secure fintech transactions
 
