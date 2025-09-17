@@ -22,7 +22,7 @@ The system follows a **Client–Server (3-Tier) Architecture**, with clear separ
 
 ## 3. System Diagram
 
-![System Architecture](./docs/system-architecture.png)
+![System Architecture](Fintech_PWA_Project_05/docs/system-architecture.png)
 
 > *Replace with your exported diagram PNG.*
 
@@ -65,4 +65,5 @@ This combination of **React + Vite + Node.js + PostgreSQL** provides:
 * A scalable, modular, and maintainable codebase
 * A reliable deployment pipeline across Vercel (frontend) and Railway (backend + DB)
 * Strong integration with PayFast for secure fintech transactions
+
 
