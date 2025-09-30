@@ -5,6 +5,7 @@ import { PrismaClient } from "./generated/prisma/index.js"; // path to Prisma cl
 
 const app = express();
 const prisma = new PrismaClient();
+const paymentRoutes = require('./routes/payments');
 const PORT = process.env.PORT || 3000;
 
 // Middleware
@@ -13,6 +14,7 @@ app.use(express.json());
 
 // Routes
 app.use("/api", router);
+app.use('/api/payments', paymentRoutes);
 
 // Test route
 app.get("/", (req, res) => {
