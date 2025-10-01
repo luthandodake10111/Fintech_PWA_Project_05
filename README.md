@@ -19,56 +19,61 @@ This is a **template** guide. The structure, pages, and modules defined here are
 
 ---
 
-## 📂 Project Structure (Template)
+## 📂 Updated Folder Structure (As Implemented)
 
 ```
-/fintech-escrow-app
-├── backend/                   # Node.js + Express + PostgreSQL (Prisma)
+FINTECH_PWA_PROJECT_05/
+│
+├── backend/                          # Node.js + Express + PostgreSQL (Prisma)
+│   ├── prisma/
+│   │   ├── migrations/               # Database migrations
+│   │   │   └── 20250929072209.../    # Migration files
+│   │   ├── migration_lock.toml       # Migration lock file
+│   │   └── schema.prisma             # Prisma database schema
+│   │
 │   ├── src/
-│   │   ├── config/            # DB connection, JWT, etc.
-│   │   ├── controllers/       # Request handlers
-│   │   ├── middleware/        # Auth, validation, error handling
-│   │   ├── models/            # Prisma models / DB logic
-│   │   ├── routes/            # API endpoint definitions
-│   │   ├── services/          # Business logic (transactions, payments, disputes)
-│   │   ├── tests/             # Unit & integration tests
-│   │   └── app.js             # Express entry point
-│   ├── prisma/                # Schema + migrations
-│   └── package.json
+│   │   ├── config/                   # Configuration files
+│   │   │   ├── config.js             # General app configuration
+│   │   │   └── payfast.js            # PayFast API configuration
+│   │   │
+│   │   ├── controllers/              # Request handlers
+│   │   │   ├── controller.js         # General controller
+│   │   │   └── paymentController.js  # PayFast payment handlers
+│   │   │
+│   │   ├── routes/                   # API endpoint definitions
+│   │   │   ├── payments.js           # Payment routes (/api/payments)
+│   │   │   └── router.js             # Main router
+│   │   │
+│   │   ├── services/                 # Business logic layer
+│   │   │   ├── payFastService.js     # PayFast API integration
+│   │   │   └── transactionService.js # Transaction business logic
+│   │   │
+│   │   ├── middleware/               # (To be implemented)
+│   │   │   └── auth.js               # Authentication middleware
+│   │   │
+│   │   └── app.js                    # Express application entry point
+│   │
+│   ├── .gitignore                    # Git ignore rules
+│   ├── dependencies.txt              # Project dependencies list
+│   ├── package-lock.json             # Lock file for npm dependencies
+│   └── package.json                  # NPM dependencies and scripts
 │
-├── frontend/                  # React + Vite
-│   ├── src/
-│   │   ├── assets/            # Images, global styles
-│   │   ├── components/        # Shared UI components
-│   │   ├── features/          # Feature-based structure
-│   │   │   ├── auth/          # Login, Register, AuthContext
-│   │   │   ├── transactions/  # Buyer/Seller transaction pages
-│   │   │   ├── disputes/      # Dispute management
-│   │   │   └── admin/         # Admin dashboard features
-│   │   ├── api/               # API calls (axios/fetch)
-│   │   ├── store/             # State management
-│   │   └── App.jsx
-│   └── package.json
+├── frontend/                         # React + Vite (To be implemented)
+│   └── (frontend structure pending)
 │
-├── design/                    # UI/UX Design Specs 
-│   ├── wireframes/            # Screens (low/high fidelity)
-│   ├── mockups/               # Final UI mockups (Figma exports, PNGs)
-│   ├── styleguide/            # Fonts, colors, spacing rules
-│   └── flows/                 # User flows & journey maps
+├── design/                           # UI/UX Design Specs (To be implemented)
+│   ├── wireframes/
+│   ├── mockups/                      # Figma design link is here, check README
+│   ├── styleguide/
+│   └── flows/
 │
-├── docs/                      # Documentation
-│   ├── api-contracts/         # Swagger/OpenAPI, Postman collections
-│   ├── db-diagrams/           # ERDs, schema diagrams
-│   └── architecture.md        # High-level project architecture
-│
-└── .github/                   # GitHub Actions (CI/CD)
-    └── workflows/
-        ├── backend-ci.yml     # Backend lint/tests
-        └── frontend-ci.yml    # Frontend build/tests
-
+└── docs/                             # Documentation 
+    ├── api-contracts/
+    ├── db-diagrams/
+    └── architecture.md
 ```
 
-## 📑 Core Pages & Dashboards (Template)
+## 📑 Core Pages & Dashboards 
 
 These are the **initial important pages**. More can be added as requirements develop.
 
