@@ -1,61 +1,167 @@
-const payFastService = require('../services/payFastService');
-const transactionService = require('../services/transactionService');
+import transactionService from "../services/transactionService.js";
+import payFastService from "../services/payFastService.js";
 
-class PaymentController {
-  // ENDPOINT 1: Create payment (frontend calls this)
+/**
+ * Payment Controller - Express route handlers
+ */
+const paymentController = {
+  /**
+   * POST /api/payments/create
+   * Create transaction and initiate PayFast payment
+   */
   async createPayment(req, res) {
     try {
       const { sellerId, amount, description } = req.body;
-      const buyer = req.user;  // From auth middleware
+      const buyer = req.user; // From auth middleware
 
-      // Step 1: Save to database
-      const transaction = await transactionService.createTransaction(
+      // Validation
+      if (!sellerId || !amount || !description) {
+        return res.status(400).json({
+          success: false,
+          error: "Missing required fields: sellerId, amount, description",
+        });
+      }
+
+      if (parseFloat(amount) <= 0) {
+        return res.status(400).json({
+          success: false,
+          error: "Amount must be greater than 0",
+        });
+      }
+
+      // Create transaction and get payment data
+      const result = await transactionService.createTransaction(
         buyer.id,
         sellerId,
         amount,
         description
       );
 
-      // Step 2: Generate PayFast form data
-      const paymentData = payFastService.generatePaymentData(
-        transaction.id,
-        amount,
-        description,
-        buyer
-      );
-
-      // Step 3: Send to frontend
-      res.json({
+      return res.status(201).json({
         success: true,
-        payment: paymentData  // Frontend uses this to redirect
+        transaction: result.transaction,
+        payment: result.payment,
       });
-
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      console.error("Create payment error:", error);
+      return res.status(500).json({
+        success: false,
+        error: error.message || "Failed to create payment",
+      });
     }
-  }
+  },
 
-  // ENDPOINT 2: PayFast callback (PayFast calls this automatically)
+  /**
+   * POST /api/payments/payfast-itn
+   * Handle PayFast Instant Transaction Notification
+   */
   async handlePayFastITN(req, res) {
     try {
       const itnData = req.body;
 
-      // Validate signature
-      if (!payFastService.validateSignature(itnData)) {
-        return res.status(400).send('Invalid signature');
+      console.log("PayFast ITN received:", JSON.stringify(itnData, null, 2));
+
+      // Validate required fields
+      const requiredFields = [
+        "m_payment_id",
+        "pf_payment_id",
+        "payment_status",
+        "amount_gross",
+        "signature",
+      ];
+      for (const field of requiredFields) {
+        if (!itnData[field]) {
+          console.error(`Missing required field: ${field}`);
+          return res.status(400).send("Invalid ITN - missing required fields");
+        }
       }
 
-      // Update database
+      // Validate signature
+      if (!payFastService.validateSignature(itnData)) {
+        console.error("Invalid signature");
+        return res.status(400).send("Invalid signature");
+      }
+
+      // Verify with PayFast servers
+      const isValid = await payFastService.verifyPayment(itnData);
+      if (!isValid) {
+        console.error("Payment verification failed");
+        return res.status(400).send("Payment verification failed");
+      }
+
+      // Update transaction status
       const transactionId = itnData.custom_int1;
       await transactionService.updatePaymentStatus(transactionId, itnData);
 
-      // Tell PayFast we received it
-      res.status(200).send('OK');
-
+      // Send 200 OK to acknowledge receipt
+      return res.status(200).send("OK");
     } catch (error) {
-      res.status(500).send('Error');
+      console.error("ITN processing error:", error);
+      return res.status(500).send("Internal server error");
     }
-  }
-}
+  },
 
-module.exports = new PaymentController();
+  /**
+   * POST /api/payments/transactions/:transactionId/release-funds
+   * Release funds to seller
+   */
+  async releaseFunds(req, res) {
+    try {
+      const { transactionId } = req.params;
+      const user = req.user; // From auth middleware
+
+      if (!transactionId) {
+        return res.status(400).json({
+          success: false,
+          error: "Transaction ID is required",
+        });
+      }
+
+      const transaction = await transactionService.releaseFunds(
+        transactionId,
+        user.id
+      );
+
+      return res.json({
+        success: true,
+        message: "Funds released successfully",
+        transaction,
+      });
+    } catch (error) {
+      console.error("Release funds error:", error);
+      return res.status(400).json({
+        success: false,
+        error: error.message || "Failed to release funds",
+      });
+    }
+  },
+
+  /**
+   * GET /api/payments/transactions/:transactionId
+   * Get transaction details
+   */
+  async getTransaction(req, res) {
+    try {
+      const { transactionId } = req.params;
+      const user = req.user;
+
+      const transaction = await transactionService.getTransaction(
+        transactionId,
+        user.id
+      );
+
+      return res.json({
+        success: true,
+        transaction,
+      });
+    } catch (error) {
+      console.error("Get transaction error:", error);
+      return res.status(400).json({
+        success: false,
+        error: error.message || "Failed to get transaction",
+      });
+    }
+  },
+};
+
+export default paymentController;
